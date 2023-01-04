@@ -10,11 +10,11 @@ module Sidekiq::Statsd
     #
     # @param [Hash] options The options to initialize the StatsD client.
     # @option options [Statsd] :statsd Existing StatsD client.
-    # @option options [String] :env ("production") The env to segment the metric key (e.g. env.prefix.worker_name.success|failure).
-    # @option options [String] :prefix ("worker") The prefix to segment the metric key (e.g. env.prefix.worker_name.success|failure).
+    # @option options [String] :prefix ("sidekiq") The prefix to segment the metric key (e.g. prefix.worker_name.success|failure).
     # @option options [String] :sidekiq_stats ("true") Send Sidekiq global stats e.g. total enqueued, processed and failed.
+    # @option options [String] :worker_stats ("false") Send Sidekiq worker stats (e.g. prefix.worker_name.success|failure).
     def initialize(options = {})
-      @options = { env: 'production', prefix: 'worker', sidekiq_stats:  true }.merge options
+      @options = { prefix: 'sidekiq', sidekiq_stats: true, worker_stats: false }.merge options
 
       @statsd = options[:statsd] || raise("A StatsD client must be provided")
     end
@@ -33,11 +33,11 @@ module Sidekiq::Statsd
 
           b.time prefix(worker_name, 'processing_time') do
             yield
-          end
+          end if @options[:worker_stats]
 
-          b.increment prefix(worker_name, 'success')
+          b.increment prefix(worker_name, 'success') if @options[:worker_stats]
         rescue => e
-          b.increment prefix(worker_name, 'failure')
+          b.increment prefix(worker_name, 'failure') if @options[:worker_stats]
           raise e
         ensure
           report_global_stats(b) if @options[:sidekiq_stats]
@@ -73,7 +73,7 @@ module Sidekiq::Statsd
 
       workers.each do |worker|
         runtime = Time.now.to_i - worker['run_at']
-        statsd.gauge prefix('queues', worker['queue'], 'runtime'), runtime
+        statsd.gauge prefix('queues', worker['queue'], 'runtime'), runtime if @options[:worker_stats]
       end
 
       worker_groups.each do |queue_name, workers|
@@ -86,8 +86,7 @@ module Sidekiq::Statsd
     #
     # @param [String] args One or more strings to be converted to a metric name.
     def prefix(*args)
-      [@options[:env], @options[:prefix], *args].compact.join('.')
+      [@options[:prefix], *args].compact.join('.')
     end
   end # ServerMiddleware
 end # Sidekiq
-

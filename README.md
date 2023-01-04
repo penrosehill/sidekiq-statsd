@@ -55,10 +55,10 @@ end
 
 ```ruby
 # @param [Hash] options The options to initialize the StatsD client.
-# @option options [Statsd] :statsd Existing [statsd client](https://github.com/github/statsd-ruby) to use.
-# @option options [String] :env ("production") The env to segment the metric key (e.g. env.prefix.worker_name.success|failure).
-# @option options [String] :prefix ("worker") The prefix to segment the metric key (e.g. env.prefix.worker_name.success|failure).
+# @option options [Statsd] :statsd Existing StatsD client.
+# @option options [String] :prefix ("sidekiq") The prefix to segment the metric key (e.g. prefix.worker_name.success|failure).
 # @option options [String] :sidekiq_stats ("true") Send Sidekiq global stats e.g. total enqueued, processed and failed.
+# @option options [String] :worker_stats ("false") Send Sidekiq worker stats (e.g. prefix.worker_name.success|failure).
 ```
 
 ## Contributing

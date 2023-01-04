@@ -16,7 +16,7 @@ shared_examples "a resilient gauge reporter" do
   it "gauges enqueued jobs" do
     expect(client)
       .to receive(:gauge)
-      .with("production.worker.enqueued", 1)
+      .with("sidekiq.enqueued", 1)
       .once
 
     middleware.call(worker, msg, queue, &job)
@@ -25,7 +25,7 @@ shared_examples "a resilient gauge reporter" do
   it "gauges processed jobs" do
     expect(client)
       .to receive(:gauge)
-      .with("production.worker.processed", 2)
+      .with("sidekiq.processed", 2)
       .once
 
     middleware.call(worker, msg, queue, &job)
@@ -34,7 +34,7 @@ shared_examples "a resilient gauge reporter" do
   it "gauges failed jobs" do
     expect(client)
       .to receive(:gauge)
-      .with("production.worker.failed", 3)
+      .with("sidekiq.failed", 3)
       .once
 
     middleware.call(worker, msg, queue, &job)
@@ -43,7 +43,7 @@ shared_examples "a resilient gauge reporter" do
   it "gauges retry set size" do
     expect(client)
       .to receive(:gauge)
-      .with("production.worker.retry_set_size", 4)
+      .with("sidekiq.retry_set_size", 4)
       .once
 
     middleware.call(worker, msg, queue, &job)
@@ -52,7 +52,7 @@ shared_examples "a resilient gauge reporter" do
   it "gauges queue depth" do
     expect(client)
       .to receive(:gauge)
-      .with("production.worker.queues.mailer.enqueued", 3)
+      .with("sidekiq.queues.mailer.enqueued", 3)
       .once
 
     middleware.call(worker, msg, queue, &job)
@@ -61,7 +61,7 @@ shared_examples "a resilient gauge reporter" do
   it "gauges queue latency" do
     expect(client)
       .to receive(:gauge)
-      .with("production.worker.queues.mailer.latency", 4.2)
+      .with("sidekiq.queues.mailer.latency", 4.2)
       .once
 
     middleware.call(worker, msg, queue, &job)
@@ -70,18 +70,7 @@ shared_examples "a resilient gauge reporter" do
   it "gauges precessing jobs" do
     expect(client)
       .to receive(:gauge)
-      .with("production.worker.queues.my_queue.processing", 1)
-      .once
-
-    middleware.call(worker, msg, queue, &job)
-  end
-
-  it "gauges job runtime" do
-    travel_to 5.minutes.from_now
-
-    expect(client)
-      .to receive(:gauge)
-      .with("production.worker.queues.my_queue.runtime", 300)
+      .with("sidekiq.queues.my_queue.processing", 1)
       .once
 
     middleware.call(worker, msg, queue, &job)

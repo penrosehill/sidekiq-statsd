@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 gemspec
 
-gem 'sidekiq', ENV['SIDEKIQ_VERSION'] if ENV['SIDEKIQ_VERSION']
+gem 'sidekiq', '< 7'
 
 group :development do
   gem  'rake'

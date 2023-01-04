@@ -1,3 +1,9 @@
+# 3.0.0
+Breaking changes (no backward compatible):
+
+* This version make worker stats optional - default false (worker_stats: false)
+* `env` has been removed and only prefix is used - default prefix `sidekiq`
+
 # 2.1.0
 
 * Report stats across all workers (processing, runtime)

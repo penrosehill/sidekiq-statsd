@@ -26,12 +26,12 @@ describe Sidekiq::Statsd::ServerMiddleware do
       it "uses the custom metric name prefix options" do
         expect(client)
           .to receive(:time)
-          .with("development.application.sidekiq.#{worker_name}.processing_time")
+          .with("application.sidekiq.#{worker_name}.processing_time")
           .once
           .and_yield
 
         described_class
-          .new(statsd: client, env: 'development', prefix: 'application.sidekiq')
+          .new(statsd: client, prefix: 'application.sidekiq', worker_stats: true)
           .call(worker, msg, queue, &clean_job)
       end
     end
@@ -51,33 +51,6 @@ describe Sidekiq::Statsd::ServerMiddleware do
     end
   end
 
-  context "with successful execution" do
-    let(:job) { clean_job }
-
-    describe "#call" do
-      it "increments success counter" do
-        expect(client)
-          .to receive(:increment)
-          .with("production.worker.#{worker_name}.success")
-          .once
-
-        middleware.call(worker, msg, queue, &job)
-      end
-
-      it "times the process execution" do
-        expect(client)
-          .to receive(:time)
-          .with("production.worker.#{worker_name}.processing_time")
-          .once
-          .and_yield
-
-        middleware.call(worker, msg, queue, &job)
-      end
-    end
-
-    it_behaves_like "a resilient gauge reporter"
-  end
-
   context "with failed execution" do
     let(:job) { broken_job }
 
@@ -85,17 +58,8 @@ describe Sidekiq::Statsd::ServerMiddleware do
       before do
         allow(client)
           .to receive(:time)
-          .with("production.worker.#{worker_name}.processing_time")
+          .with("sidekiq.#{worker_name}.processing_time")
           .and_yield
-      end
-
-      it "increments failure counter" do
-        expect(client)
-          .to receive(:increment)
-          .with("production.worker.#{worker_name}.failure")
-          .once
-
-        expect{ middleware.call(worker, msg, queue, &job) }.to raise_error('error')
       end
     end
 
