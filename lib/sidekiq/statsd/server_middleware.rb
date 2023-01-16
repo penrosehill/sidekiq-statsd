@@ -28,14 +28,16 @@ module Sidekiq::Statsd
     def call worker, msg, queue
       @statsd.batch do |b|
         begin
-          # colon causes invalid metric names
-          worker_name = worker.class.name.gsub('::', '.')
-
-          b.time prefix(worker_name, 'processing_time') do
+          if @options[:worker_stats]
+            # colon causes invalid metric names
+            worker_name = worker.class.name.gsub('::', '.')
+            b.time prefix(worker_name, 'processing_time') do
+              yield
+            end
+            b.increment prefix(worker_name, 'success')
+          else
             yield
-          end if @options[:worker_stats]
-
-          b.increment prefix(worker_name, 'success') if @options[:worker_stats]
+          end
         rescue => e
           b.increment prefix(worker_name, 'failure') if @options[:worker_stats]
           raise e
@@ -73,8 +75,8 @@ module Sidekiq::Statsd
 
       workers.each do |worker|
         runtime = Time.now.to_i - worker['run_at']
-        statsd.gauge prefix('queues', worker['queue'], 'runtime'), runtime if @options[:worker_stats]
-      end
+        statsd.gauge prefix('queues', worker['queue'], 'runtime'), runtime
+      end if @options[:worker_stats]
 
       worker_groups.each do |queue_name, workers|
         statsd.gauge prefix('queues', queue_name, 'processing'), workers.size
